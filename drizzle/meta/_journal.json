@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1761418833700,
+      "tag": "0000_right_garia",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1761778431223,
+      "tag": "0001_dark_psylocke",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1761778482402,
+      "tag": "0002_small_lethal_legion",
+      "breakpoints": true
+    }
+  ]
+}

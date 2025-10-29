@@ -1,0 +1,1 @@
+ALTER TABLE `portfolio` ADD `user_id` text NOT NULL REFERENCES user(id);
