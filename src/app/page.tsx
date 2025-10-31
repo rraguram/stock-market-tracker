@@ -85,7 +85,7 @@ export default function Home() {
         </div>
 
         <Navigation />
-        <main className="container mx-auto px-4 py-8 relative z-10 pb-24">
+        <main className="container mx-auto px-4 py-8 relative z-10 pb-24 pt-20">
           <div className="mb-8">
             <Skeleton className="h-10 w-80 mb-2" />
             <Skeleton className="h-5 w-96" />
@@ -114,7 +114,7 @@ export default function Home() {
       <Navigation />
       
       {/* Hero Section */}
-      <section className="border-b bg-gradient-to-b from-muted/50 to-background relative">
+      <section className="border-b bg-gradient-to-b from-muted/50 to-background relative pt-20">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-violet-500/5 pointer-events-none" />
         <div className="container mx-auto px-4 py-12 md:py-16 relative z-10">
           <div className="text-center max-w-3xl mx-auto">

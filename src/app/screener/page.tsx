@@ -33,7 +33,7 @@ export default function ScreenerPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background relative">
       {/* Purple Texture Overlay */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-purple-500/20 rounded-full blur-[120px] translate-x-1/3 -translate-y-1/3" />
@@ -43,7 +43,7 @@ export default function ScreenerPage() {
 
       <Navigation />
       
-      <main className="container mx-auto px-4 py-8 relative z-10">
+      <main className="container mx-auto px-4 py-8 relative z-10 pb-24 pt-20">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Stock Screener</h1>
           <p className="text-muted-foreground">

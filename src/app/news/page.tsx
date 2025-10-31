@@ -38,7 +38,7 @@ export default function NewsPage() {
       </div>
 
       <Navigation />
-      <main className="container mx-auto px-4 py-8 relative z-10">
+      <main className="container mx-auto px-4 py-8 relative z-10 pb-24 pt-20">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Market News</h1>
           <p className="text-muted-foreground">

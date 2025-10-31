@@ -230,7 +230,7 @@ export default function PortfolioPage() {
         </div>
 
         <Navigation />
-        <main className="container mx-auto px-4 py-8 relative z-10">
+        <main className="container mx-auto px-4 py-8 relative z-10 pb-24 pt-20">
           <div className="mb-8">
             <Skeleton className="h-10 w-64 mb-2" />
             <Skeleton className="h-5 w-96" />
@@ -258,7 +258,7 @@ export default function PortfolioPage() {
       </div>
 
       <Navigation />
-      <main className="container mx-auto px-4 py-8 relative z-10">
+      <main className="container mx-auto px-4 py-8 relative z-10 pb-24 pt-20">
         <div className="mb-8 flex justify-between items-center">
           <div>
             <h1 className="text-4xl font-bold mb-2">Portfolio Tracker</h1>

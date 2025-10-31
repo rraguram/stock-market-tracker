@@ -1,3 +1,6 @@
+/* Updated: 2025-10-31T10:35:23.037Z */
+/* Updated: 2025-10-31T09:36:42.390Z */
+/* Updated: 2025-10-30T00:11:08.113Z */
 /* Updated: 2025-10-29T23:33:37.001Z */
 /* Updated: 2025-10-29T23:29:26.227Z */
 /* Updated: 2025-10-29T22:26:08.978Z */
@@ -129,6 +132,20 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Custom animations for navigation */
+@keyframes bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 1s ease-in-out infinite;
 }
 
 /* Hide Next.js error overlay portal */
