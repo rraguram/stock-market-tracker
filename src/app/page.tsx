@@ -84,9 +84,7 @@ export default function Home() {
           <div className="absolute top-1/2 left-1/2 w-[700px] h-[700px] bg-fuchsia-500/10 rounded-full blur-[110px] -translate-x-1/2 -translate-y-1/2" />
         </div>
 
-        <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <Navigation />
-        </div>
+        <Navigation />
         <main className="container mx-auto px-4 py-8 relative z-10 pb-24">
           <div className="mb-8">
             <Skeleton className="h-10 w-80 mb-2" />
@@ -113,10 +111,7 @@ export default function Home() {
         <div className="absolute top-1/2 left-1/2 w-[700px] h-[700px] bg-fuchsia-500/10 rounded-full blur-[110px] -translate-x-1/2 -translate-y-1/2" />
       </div>
 
-      {/* Sticky Navigation */}
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <Navigation />
-      </div>
+      <Navigation />
       
       {/* Hero Section */}
       <section className="border-b bg-gradient-to-b from-muted/50 to-background relative">
