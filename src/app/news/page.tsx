@@ -42,15 +42,15 @@ export default function NewsPage() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Market News</h1>
           <p className="text-muted-foreground">
-            Stay updated with the latest financial news and market insights
+            Stay updated with the latest financial news from FinViz
           </p>
         </div>
 
         {loading ? (
           <Skeleton className="h-[600px]" />
         ) : (
-          <Card className="p-6 bg-card/95 backdrop-blur-sm border-border/50">
-            <div className="space-y-3">
+          <Card className="p-4 bg-card/95 backdrop-blur-sm border-border/50">
+            <div className="space-y-1">
               {news.map((item) => {
                 const timestamp = new Date(item.publishedAt).toLocaleTimeString('en-US', {
                   hour: '2-digit',
@@ -75,17 +75,17 @@ export default function NewsPage() {
                     href={item.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors group"
+                    className="flex items-start gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
                   >
-                    <div className={`flex-shrink-0 w-8 h-8 ${sourceColors[colorIndex]} rounded flex items-center justify-center text-white text-sm font-bold`}>
+                    <div className={`flex-shrink-0 w-6 h-6 ${sourceColors[colorIndex]} rounded flex items-center justify-center text-white text-xs font-bold`}>
                       {sourceInitial}
                     </div>
                     
-                    <span className="text-sm text-muted-foreground font-medium min-w-[90px] flex-shrink-0">
+                    <span className="text-xs text-muted-foreground font-medium min-w-[70px] flex-shrink-0">
                       {timestamp}
                     </span>
                     
-                    <span className="text-base text-cyan-500 group-hover:text-cyan-400 transition-colors flex-1">
+                    <span className="text-sm text-cyan-500 group-hover:text-cyan-400 transition-colors flex-1 leading-snug">
                       {item.title}
                     </span>
                   </Link>
