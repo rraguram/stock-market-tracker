@@ -84,8 +84,10 @@ export default function Home() {
           <div className="absolute top-1/2 left-1/2 w-[700px] h-[700px] bg-fuchsia-500/10 rounded-full blur-[110px] -translate-x-1/2 -translate-y-1/2" />
         </div>
 
-        <Navigation />
-        <main className="container mx-auto px-4 py-8 relative z-10">
+        <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <Navigation />
+        </div>
+        <main className="container mx-auto px-4 py-8 relative z-10 pb-24">
           <div className="mb-8">
             <Skeleton className="h-10 w-80 mb-2" />
             <Skeleton className="h-5 w-96" />
@@ -111,7 +113,10 @@ export default function Home() {
         <div className="absolute top-1/2 left-1/2 w-[700px] h-[700px] bg-fuchsia-500/10 rounded-full blur-[110px] -translate-x-1/2 -translate-y-1/2" />
       </div>
 
-      <Navigation />
+      {/* Sticky Navigation */}
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <Navigation />
+      </div>
       
       {/* Hero Section */}
       <section className="border-b bg-gradient-to-b from-muted/50 to-background relative">
@@ -143,7 +148,7 @@ export default function Home() {
         </div>
       </section>
 
-      <main className="container mx-auto px-4 py-8 md:py-12 relative z-10">
+      <main className="container mx-auto px-4 py-8 md:py-12 relative z-10 pb-24">
         {/* Market Heatmap */}
         <section className="mb-10 md:mb-12">
           <h2 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6">Market Heatmap</h2>
