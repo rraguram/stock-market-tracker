@@ -11,24 +11,31 @@ import { Stock, MarketIndex, NewsItem } from "@/lib/stocks";
 import { StockCard } from "@/components/StockCard";
 import { StockListItem } from "@/components/StockListItem";
 import { StockCompactItem } from "@/components/StockCompactItem";
+import { CryptoCard } from "@/components/CryptoCard";
 import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import Link from "next/link";
 import { ArrowUpIcon, ArrowDownIcon, TrendingUp } from "lucide-react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
 import { StockHeatmap } from "@/components/StockHeatmap";
 import { useSession } from "@/lib/auth-client";
+
+interface Crypto {
+  ticker: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  volume: number;
+  marketCap: string;
+  high: number;
+  low: number;
+}
 
 export default function Home() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
   const [indices, setIndices] = useState<MarketIndex[]>([]);
   const [stocks, setStocks] = useState<Stock[]>([]);
+  const [cryptos, setCryptos] = useState<Crypto[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -45,20 +52,23 @@ export default function Home() {
       async function fetchData() {
         try {
           setLoading(true);
-          const [indicesRes, stocksRes, newsRes] = await Promise.all([
+          const [indicesRes, stocksRes, cryptosRes, newsRes] = await Promise.all([
             fetch("/api/indices"),
             fetch("/api/stocks"),
+            fetch("/api/crypto"),
             fetch("/api/news"),
           ]);
 
-          const [indicesData, stocksData, newsData] = await Promise.all([
+          const [indicesData, stocksData, cryptosData, newsData] = await Promise.all([
             indicesRes.json(),
             stocksRes.json(),
+            cryptosRes.json(),
             newsRes.json(),
           ]);
 
           setIndices(indicesData);
           setStocks(stocksData);
+          setCryptos(cryptosData.slice(0, 5));
           setNews(newsData.slice(0, 3));
         } catch (error) {
           console.error("Error fetching data:", error);
@@ -209,13 +219,13 @@ export default function Home() {
           )}
         </section>
 
-        {/* Top 10 S&P 500 Stocks - Full Dashboard View */}
+        {/* Top Market Leaders by Market Cap */}
         <section className="mb-10 md:mb-12">
           <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold mb-2">Top 10 S&P 500 Stocks</h2>
+              <h2 className="text-2xl md:text-3xl font-bold mb-2">Top Market Leaders</h2>
               <p className="text-muted-foreground">
-                Real-time tracking of the largest companies by market cap
+                Real-time tracking of the largest S&P 500 companies by market capitalization
               </p>
             </div>
             <ViewToggle view={viewMode} onViewChange={setViewMode} />
@@ -244,10 +254,41 @@ export default function Home() {
           )}
         </section>
 
+        {/* Top 5 Cryptocurrencies */}
+        <section className="mb-10 md:mb-12">
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold mb-2">Top Cryptocurrencies</h2>
+              <p className="text-muted-foreground">
+                Real-time tracking of the largest cryptocurrencies by market cap
+              </p>
+            </div>
+            <Link href="/crypto">
+              <Button variant="outline" size="sm" className="md:size-default">
+                View All Crypto
+              </Button>
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-[280px]" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+              {cryptos.map((crypto) => (
+                <CryptoCard key={crypto.ticker} crypto={crypto} />
+              ))}
+            </div>
+          )}
+        </section>
+
         {/* Latest News */}
         <section>
           <div className="flex justify-between items-center mb-4 md:mb-6">
-            <h2 className="text-2xl md:text-3xl font-bold">Latest News</h2>
+            <h2 className="text-2xl md:text-3xl font-bold">Latest Financial News</h2>
             <Link href="/news">
               <Button variant="outline" size="sm" className="md:size-default">View All News</Button>
             </Link>

@@ -3,10 +3,17 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const symbol = searchParams.get('symbol') || undefined;
+    const symbol = searchParams.get('symbol');
 
-    // Generate FinViz-style news data
-    const newsItems = generateFinVizStyleNews(symbol);
+    let newsItems;
+    
+    if (symbol) {
+      // Fetch stock-specific news from Yahoo Finance
+      newsItems = await fetchYahooStockNews(symbol);
+    } else {
+      // Fetch general market news
+      newsItems = await fetchYahooMarketNews();
+    }
 
     return NextResponse.json(newsItems);
   } catch (error) {
@@ -18,56 +25,98 @@ export async function GET(request: Request) {
   }
 }
 
-function generateFinVizStyleNews(symbol?: string) {
-  const sources = [
-    'Reuters', 'Bloomberg', 'MarketWatch', 'CNBC', 'Seeking Alpha',
-    'Barron\'s', 'WSJ', 'Financial Times', 'Yahoo Finance', 'Investor\'s Business Daily'
-  ];
-  
-  const headlines = [
-    'Fed signals potential rate cut in December as inflation cools',
-    'Tech stocks rally as AI spending drives Q4 earnings beats',
-    'Oil prices surge 3% on OPEC+ production cut extension',
-    'S&P 500 reaches new all-time high on strong jobs data',
-    'Treasury yields fall as investors seek safe haven assets',
-    'Dollar strengthens against major currencies on Fed comments',
-    'Nasdaq jumps 2% led by semiconductor stock gains',
-    'Gold hits record high amid geopolitical tensions',
-    'Banks report strong Q4 earnings, raise dividend guidance',
-    'Retail sales exceed expectations, boosting consumer stocks',
-    'Housing starts decline as mortgage rates remain elevated',
-    'Manufacturing PMI shows expansion for third straight month',
-    'Bitcoin surges past $65K on ETF approval optimism',
-    'Energy sector leads market gains on crude price rally',
-    'Small-cap stocks outperform as investors rotate portfolios',
-    'European markets close higher on ECB policy outlook',
-    'Asian markets mixed amid China growth concerns',
-    'Corporate bond spreads tighten on improved credit conditions',
-    'Inflation data comes in below forecasts, lifting equities',
-    'Merger activity picks up as dealmaking sentiment improves'
-  ];
-
-  const now = new Date();
-  const news: any[] = [];
-
-  for (let i = 0; i < 20; i++) {
-    const minutesAgo = Math.floor(Math.random() * 480); // Random time within last 8 hours
-    const timestamp = new Date(now.getTime() - minutesAgo * 60000);
-    const source = sources[Math.floor(Math.random() * sources.length)];
-    const headline = headlines[Math.floor(Math.random() * headlines.length)];
-    
-    news.push({
-      id: `finviz-${i}`,
-      title: headline,
-      url: `https://finviz.com/news/${1000 + i}`,
-      source: source,
-      publishedAt: timestamp.toISOString(),
-      category: 'market'
+async function fetchYahooStockNews(symbol: string) {
+  try {
+    // Use Yahoo Finance news API
+    const newsUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${symbol}&newsCount=20`;
+    const response = await fetch(newsUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0'
+      }
     });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch news');
+    }
+
+    const data = await response.json();
+    const news = data.news || [];
+
+    return news.map((item: any, index: number) => ({
+      id: item.uuid || `news-${index}`,
+      title: item.title,
+      description: item.description || item.summary || '',
+      url: `https://finance.yahoo.com${item.link || ''}`,
+      source: item.publisher || 'Yahoo Finance',
+      publishedAt: new Date(item.providerPublishTime * 1000).toISOString(),
+      imageUrl: item.thumbnail?.resolutions?.[0]?.url || item.thumbnail?.url,
+      category: item.type || 'market',
+      image: item.thumbnail?.resolutions?.[0]?.url || item.thumbnail?.url
+    }));
+  } catch (error) {
+    console.error(`Error fetching news for ${symbol}:`, error);
+    return [];
   }
+}
 
-  // Sort by most recent first
-  news.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+async function fetchYahooMarketNews() {
+  try {
+    // Fetch general market news from multiple sources
+    const sources = ['S&P 500', 'stock market', 'Wall Street'];
+    const allNews = await Promise.all(
+      sources.map(source => fetchNewsFromSource(source))
+    );
 
-  return news;
+    // Flatten and deduplicate
+    const newsMap = new Map();
+    allNews.flat().forEach(item => {
+      if (!newsMap.has(item.id)) {
+        newsMap.set(item.id, item);
+      }
+    });
+
+    const news = Array.from(newsMap.values());
+    
+    // Sort by date
+    news.sort((a, b) => 
+      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+    );
+
+    return news.slice(0, 20);
+  } catch (error) {
+    console.error('Error fetching market news:', error);
+    return [];
+  }
+}
+
+async function fetchNewsFromSource(query: string) {
+  try {
+    const newsUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&newsCount=10`;
+    const response = await fetch(newsUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0'
+      }
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const data = await response.json();
+    const news = data.news || [];
+
+    return news.map((item: any, index: number) => ({
+      id: item.uuid || `${query}-${index}`,
+      title: item.title,
+      description: item.description || item.summary || '',
+      url: `https://finance.yahoo.com${item.link || ''}`,
+      source: item.publisher || 'Yahoo Finance',
+      publishedAt: new Date(item.providerPublishTime * 1000).toISOString(),
+      imageUrl: item.thumbnail?.resolutions?.[0]?.url || item.thumbnail?.url,
+      category: item.type || 'market',
+      image: item.thumbnail?.resolutions?.[0]?.url || item.thumbnail?.url
+    }));
+  } catch (error) {
+    return [];
+  }
 }

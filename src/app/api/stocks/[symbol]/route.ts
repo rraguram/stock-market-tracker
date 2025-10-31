@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { generateStockData, TOP_STOCKS } from '@/lib/stocks';
 
 export async function GET(
   request: Request,
@@ -7,16 +6,48 @@ export async function GET(
 ) {
   try {
     const { symbol } = await params;
-    const stockInfo = TOP_STOCKS.find((s) => s.symbol === symbol);
+    
+    // Fetch from Yahoo Finance
+    const quoteUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1d&interval=1d`;
+    const response = await fetch(quoteUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0'
+      }
+    });
 
-    if (!stockInfo) {
+    if (!response.ok) {
       return NextResponse.json(
         { error: 'Stock not found' },
         { status: 404 }
       );
     }
 
-    const stockData = generateStockData(stockInfo.symbol, stockInfo.name);
+    const data = await response.json();
+    const result = data.chart.result[0];
+    const meta = result.meta;
+    const quote = result.indicators.quote[0];
+
+    const stockData = {
+      symbol: meta.symbol,
+      name: meta.longName || meta.symbol,
+      price: meta.regularMarketPrice || 0,
+      change: meta.regularMarketPrice - meta.previousClose || 0,
+      changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose * 100) || 0,
+      volume: quote.volume[quote.volume.length - 1] || 0,
+      marketCap: formatMarketCap(meta.marketCap),
+      high: meta.regularMarketDayHigh || 0,
+      low: meta.regularMarketDayLow || 0,
+      open: meta.regularMarketOpen || 0,
+      previousClose: meta.previousClose || 0,
+      fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh || 0,
+      fiftyTwoWeekLow: meta.fiftyTwoWeekLow || 0,
+      peRatio: meta.trailingPE || 0,
+      eps: meta.epsTrailingTwelveMonths || 0,
+      beta: meta.beta || 1.0,
+      dividendYield: meta.dividendYield ? meta.dividendYield * 100 : 0,
+      avgVolume: meta.averageDailyVolume10Day || 0,
+      sharesOutstanding: formatShares(meta.sharesOutstanding)
+    };
 
     return NextResponse.json(stockData);
   } catch (error) {
@@ -26,4 +57,19 @@ export async function GET(
       { status: 500 }
     );
   }
+}
+
+function formatMarketCap(value?: number): string {
+  if (!value) return 'N/A';
+  if (value >= 1e12) return `${(value / 1e12).toFixed(2)}T`;
+  if (value >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
+  if (value >= 1e6) return `${(value / 1e6).toFixed(2)}M`;
+  return value.toString();
+}
+
+function formatShares(value?: number): string {
+  if (!value) return 'N/A';
+  if (value >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
+  if (value >= 1e6) return `${(value / 1e6).toFixed(2)}M`;
+  return value.toString();
 }
