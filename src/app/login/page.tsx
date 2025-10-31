@@ -36,7 +36,7 @@ function LoginForm() {
         email,
         password,
         rememberMe,
-        callbackURL: "/dashboard",
+        callbackURL: "/",
       });
 
       if (error?.code) {
@@ -47,8 +47,8 @@ function LoginForm() {
 
       toast.success("Logged in successfully!");
       
-      // Redirect to callback URL or dashboard
-      const redirectTo = searchParams.get("redirect") || "/dashboard";
+      // Redirect to callback URL or home
+      const redirectTo = searchParams.get("redirect") || "/";
       router.push(redirectTo);
     } catch (error) {
       console.error("Login error:", error);
