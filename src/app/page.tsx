@@ -144,67 +144,6 @@ export default function Home() {
       </section>
 
       <main className="container mx-auto px-4 py-8 md:py-12 relative z-10">
-        {/* Headlines Section */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6">Headlines</h2>
-          {loading ? (
-            <Skeleton className="h-64" />
-          ) : (
-            <Card className="p-4 md:p-6 bg-card/95 backdrop-blur-sm border-border/50">
-              <div className="space-y-3">
-                {news.slice(0, 6).map((item) => {
-                  const timestamp = new Date(item.publishedAt).toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                  });
-                  
-                  const sourceInitial = item.source.charAt(0).toUpperCase();
-                  const sourceColors = [
-                    'bg-blue-600',
-                    'bg-green-600',
-                    'bg-purple-600',
-                    'bg-orange-600',
-                    'bg-red-600',
-                    'bg-cyan-600'
-                  ];
-                  const colorIndex = item.source.charCodeAt(0) % sourceColors.length;
-                  
-                  return (
-                    <Link 
-                      key={item.id}
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
-                    >
-                      <div className={`flex-shrink-0 w-6 h-6 ${sourceColors[colorIndex]} rounded flex items-center justify-center text-white text-xs font-bold`}>
-                        {sourceInitial}
-                      </div>
-                      
-                      <span className="text-sm text-muted-foreground font-medium min-w-[80px] flex-shrink-0">
-                        {timestamp}
-                      </span>
-                      
-                      <span className="text-sm md:text-base text-cyan-500 group-hover:text-cyan-400 transition-colors flex-1">
-                        {item.title}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-              
-              <div className="mt-4 pt-4 border-t border-border/50 text-center">
-                <Link href="/news">
-                  <Button variant="ghost" size="sm" className="text-cyan-500 hover:text-cyan-400">
-                    View All Headlines →
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-          )}
-        </section>
-
         {/* Market Heatmap */}
         <section className="mb-10 md:mb-12">
           <h2 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6">Market Heatmap</h2>

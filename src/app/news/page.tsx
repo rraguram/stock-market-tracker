@@ -2,26 +2,22 @@
 
 import { useEffect, useState } from "react";
 import { Navigation } from "@/components/Navigation";
-import { NewsCard } from "@/components/NewsCard";
-import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { NewsItem } from "@/lib/stocks";
 import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
 
 export default function NewsPage() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [category, setCategory] = useState<string>("all");
 
   useEffect(() => {
     async function fetchNews() {
       try {
         setLoading(true);
-        const url = category === "all" 
-          ? "/api/news" 
-          : `/api/news?category=${category}`;
-        const response = await fetch(url);
+        const response = await fetch("/api/news");
         const data = await response.json();
-        setNews(data);
+        setNews(data.slice(0, 10));
       } catch (error) {
         console.error("Error fetching news:", error);
       } finally {
@@ -30,14 +26,7 @@ export default function NewsPage() {
     }
 
     fetchNews();
-  }, [category]);
-
-  const categories = [
-    { value: "all", label: "All News" },
-    { value: "market-trends", label: "Market Trends" },
-    { value: "earnings", label: "Earnings" },
-    { value: "economy", label: "Economy" },
-  ];
+  }, []);
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -57,30 +46,53 @@ export default function NewsPage() {
           </p>
         </div>
 
-        <div className="flex gap-2 mb-8 flex-wrap">
-          {categories.map((cat) => (
-            <Button
-              key={cat.value}
-              variant={category === cat.value ? "default" : "outline"}
-              onClick={() => setCategory(cat.value)}
-            >
-              {cat.label}
-            </Button>
-          ))}
-        </div>
-
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="h-[350px]" />
-            ))}
-          </div>
+          <Skeleton className="h-[600px]" />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {news.map((item) => (
-              <NewsCard key={item.id} news={item} />
-            ))}
-          </div>
+          <Card className="p-6 bg-card/95 backdrop-blur-sm border-border/50">
+            <div className="space-y-3">
+              {news.map((item) => {
+                const timestamp = new Date(item.publishedAt).toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+                });
+                
+                const sourceInitial = item.source.charAt(0).toUpperCase();
+                const sourceColors = [
+                  'bg-blue-600',
+                  'bg-green-600',
+                  'bg-purple-600',
+                  'bg-orange-600',
+                  'bg-red-600',
+                  'bg-cyan-600'
+                ];
+                const colorIndex = item.source.charCodeAt(0) % sourceColors.length;
+                
+                return (
+                  <Link 
+                    key={item.id}
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors group"
+                  >
+                    <div className={`flex-shrink-0 w-8 h-8 ${sourceColors[colorIndex]} rounded flex items-center justify-center text-white text-sm font-bold`}>
+                      {sourceInitial}
+                    </div>
+                    
+                    <span className="text-sm text-muted-foreground font-medium min-w-[90px] flex-shrink-0">
+                      {timestamp}
+                    </span>
+                    
+                    <span className="text-base text-cyan-500 group-hover:text-cyan-400 transition-colors flex-1">
+                      {item.title}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </Card>
         )}
       </main>
     </div>
