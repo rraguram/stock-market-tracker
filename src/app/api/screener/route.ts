@@ -123,7 +123,7 @@ export async function GET(request: Request) {
 
 async function fetchStockData(symbol: string) {
   try {
-    const quoteUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1d&interval=1d`;
+    const quoteUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=2d&interval=1d`;
     const response = await fetch(quoteUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0'
@@ -140,12 +140,20 @@ async function fetchStockData(symbol: string) {
     const meta = result.meta;
     const quote = result.indicators.quote[0];
 
+    // Get current and previous close from the actual data points
+    const closes = quote.close.filter((c: number | null) => c !== null);
+    const currentPrice = closes[closes.length - 1] || meta.regularMarketPrice || 0;
+    const previousClose = closes.length > 1 ? closes[closes.length - 2] : meta.chartPreviousClose || meta.previousClose || currentPrice;
+    
+    const change = currentPrice - previousClose;
+    const changePercent = previousClose !== 0 ? (change / previousClose * 100) : 0;
+
     return {
       symbol: meta.symbol,
       name: meta.longName || meta.symbol,
-      price: meta.regularMarketPrice || 0,
-      change: meta.regularMarketPrice - meta.previousClose || 0,
-      changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose * 100) || 0,
+      price: currentPrice,
+      change,
+      changePercent,
       volume: quote.volume[quote.volume.length - 1] || 0,
       marketCap: formatMarketCap(meta.marketCap),
       peRatio: meta.trailingPE || 0,

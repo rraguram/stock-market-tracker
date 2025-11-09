@@ -24,7 +24,7 @@ export async function GET() {
 
 async function fetchYahooCryptoData(symbol: string) {
   try {
-    const quoteUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1d&interval=1d`;
+    const quoteUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=2d&interval=1d`;
     const response = await fetch(quoteUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0'
@@ -43,15 +43,23 @@ async function fetchYahooCryptoData(symbol: string) {
     const ticker = symbol.replace('-USD', '');
     const name = getCryptoName(ticker);
 
+    // Get current and previous close from the actual data points
+    const closes = quote.close.filter((c: number | null) => c !== null);
+    const currentPrice = closes[closes.length - 1] || meta.regularMarketPrice || 0;
+    const previousClose = closes.length > 1 ? closes[closes.length - 2] : meta.chartPreviousClose || currentPrice;
+    
+    const change = currentPrice - previousClose;
+    const changePercent = previousClose !== 0 ? (change / previousClose * 100) : 0;
+
     return {
       ticker,
       name,
       symbol,
-      price: meta.regularMarketPrice || 0,
-      change: meta.regularMarketPrice - meta.previousClose || 0,
-      changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose * 100) || 0,
+      price: currentPrice,
+      change,
+      changePercent,
       volume: quote.volume[quote.volume.length - 1] || 0,
-      marketCap: formatMarketCap(meta.marketCap),
+      marketCap: formatMarketCap(meta.marketCap || getMockMarketCap(ticker)),
       high: meta.regularMarketDayHigh || 0,
       low: meta.regularMarketDayLow || 0,
       fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh || 0,
@@ -74,10 +82,22 @@ function getCryptoName(ticker: string): string {
   return names[ticker] || ticker;
 }
 
+function getMockMarketCap(ticker: string): number {
+  // Approximate market caps as fallback (in billions)
+  const marketCaps: { [key: string]: number } = {
+    'BTC': 2100000000000,  // ~2.1T
+    'ETH': 430000000000,   // ~430B
+    'BNB': 145000000000,   // ~145B
+    'SOL': 80000000000,    // ~80B
+    'XRP': 130000000000    // ~130B
+  };
+  return marketCaps[ticker] || 0;
+}
+
 function formatMarketCap(value?: number): string {
   if (!value) return 'N/A';
-  if (value >= 1e12) return `${(value / 1e12).toFixed(2)}T`;
-  if (value >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
-  if (value >= 1e6) return `${(value / 1e6).toFixed(2)}M`;
+  if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
+  if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
+  if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
   return value.toString();
 }
