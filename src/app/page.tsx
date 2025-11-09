@@ -16,7 +16,6 @@ import { ViewToggle, ViewMode } from "@/components/ViewToggle";
 import Link from "next/link";
 import { ArrowUpIcon, ArrowDownIcon, TrendingUp } from "lucide-react";
 import { StockHeatmap } from "@/components/StockHeatmap";
-import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 
 interface Crypto {
@@ -32,8 +31,6 @@ interface Crypto {
 }
 
 export default function Home() {
-  const router = useRouter();
-  const { data: session, isPending } = useSession();
   const [indices, setIndices] = useState<MarketIndex[]>([]);
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [cryptos, setCryptos] = useState<Crypto[]>([]);
@@ -41,77 +38,68 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
-  // Redirect if not authenticated
   useEffect(() => {
-    if (!isPending && !session?.user) {
-      router.push("/login?redirect=" + encodeURIComponent("/"));
-    }
-  }, [session, isPending, router]);
+    async function fetchData() {
+      try {
+        setLoading(true);
+        const [indicesRes, stocksRes, cryptosRes, newsRes] = await Promise.all([
+          fetch("/api/indices"),
+          fetch("/api/stocks"),
+          fetch("/api/crypto"),
+          fetch("/api/news"),
+        ]);
 
-  useEffect(() => {
-    if (session?.user) {
-      async function fetchData() {
-        try {
-          setLoading(true);
-          const [indicesRes, stocksRes, cryptosRes, newsRes] = await Promise.all([
-            fetch("/api/indices"),
-            fetch("/api/stocks"),
-            fetch("/api/crypto"),
-            fetch("/api/news"),
-          ]);
+        const [indicesData, stocksData, cryptosData, newsData] = await Promise.all([
+          indicesRes.json(),
+          stocksRes.json(),
+          cryptosRes.json(),
+          newsRes.json(),
+        ]);
 
-          const [indicesData, stocksData, cryptosData, newsData] = await Promise.all([
-            indicesRes.json(),
-            stocksRes.json(),
-            cryptosRes.json(),
-            newsRes.json(),
-          ]);
-
-          // Handle error responses properly
-          if (indicesData && !indicesData.error && Array.isArray(indicesData)) {
-            setIndices(indicesData);
-          } else {
-            console.error("Indices error:", indicesData?.error);
-            setIndices([]);
-          }
-
-          if (stocksData && !stocksData.error && Array.isArray(stocksData)) {
-            setStocks(stocksData);
-          } else {
-            console.error("Stocks error:", stocksData?.error);
-            toast.error(stocksData?.error || "Failed to load stock data");
-            setStocks([]);
-          }
-
-          if (cryptosData && !cryptosData.error && Array.isArray(cryptosData)) {
-            setCryptos(cryptosData.slice(0, 5));
-          } else {
-            console.error("Cryptos error:", cryptosData?.error);
-            setCryptos([]);
-          }
-
-          if (newsData && !newsData.error && Array.isArray(newsData)) {
-            setNews(newsData.slice(0, 3));
-          } else {
-            console.error("News error:", newsData?.error);
-            setNews([]);
-          }
-        } catch (error) {
-          console.error("Error fetching data:", error);
-          toast.error("Failed to fetch market data");
-        } finally {
-          setLoading(false);
+        // Handle error responses properly
+        if (indicesData && !indicesData.error && Array.isArray(indicesData)) {
+          setIndices(indicesData);
+        } else {
+          console.error("Indices error:", indicesData?.error);
+          setIndices([]);
         }
+
+        if (stocksData && !stocksData.error && Array.isArray(stocksData)) {
+          setStocks(stocksData);
+        } else {
+          console.error("Stocks error:", stocksData?.error);
+          toast.error(stocksData?.error || "Failed to load stock data");
+          setStocks([]);
+        }
+
+        if (cryptosData && !cryptosData.error && Array.isArray(cryptosData)) {
+          setCryptos(cryptosData.slice(0, 5));
+        } else {
+          console.error("Cryptos error:", cryptosData?.error);
+          setCryptos([]);
+        }
+
+        if (newsData && !newsData.error && Array.isArray(newsData)) {
+          setNews(newsData.slice(0, 3));
+        } else {
+          console.error("News error:", newsData?.error);
+          setNews([]);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast.error("Failed to fetch market data");
+      } finally {
+        setLoading(false);
       }
-
-      fetchData();
-      const interval = setInterval(fetchData, 30000); // Refresh every 30 seconds
-
-      return () => clearInterval(interval);
     }
-  }, [session]);
 
-  if (isPending || loading) {
+    fetchData();
+    const interval = setInterval(fetchData, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-background relative">
         {/* Purple Texture Overlay */}
@@ -136,8 +124,6 @@ export default function Home() {
       </div>
     );
   }
-
-  if (!session?.user) return null;
 
   return (
     <div className="min-h-screen bg-background relative">
