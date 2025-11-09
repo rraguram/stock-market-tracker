@@ -1,75 +1,69 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { AlphaVantageClient } from '@/lib/alpha-vantage';
+import { ApiError } from '@/lib/types/alpha-vantage';
+
+export const revalidate = 300; // Cache for 5 minutes
 
 export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ symbol: string }> }
+  request: NextRequest,
+  { params }: { params: { symbol: string } }
 ) {
   try {
-    const { symbol } = await params;
-    
-    // Fetch from Yahoo Finance
-    const quoteUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1d&interval=1d`;
-    const response = await fetch(quoteUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0'
-      }
-    });
+    const symbol = params.symbol.toUpperCase();
 
-    if (!response.ok) {
+    if (!symbol || symbol.length > 10) {
       return NextResponse.json(
-        { error: 'Stock not found' },
-        { status: 404 }
+        { error: 'Invalid symbol' },
+        { status: 400 }
       );
     }
 
-    const data = await response.json();
-    const result = data.chart.result[0];
-    const meta = result.meta;
-    const quote = result.indicators.quote[0];
+    const client = new AlphaVantageClient();
+    
+    // Fetch quote data
+    const quoteResponse = await client.getGlobalQuote(symbol);
+    
+    // Fetch company overview for additional metrics
+    let overview;
+    try {
+      overview = await client.getCompanyOverview(symbol);
+    } catch (error) {
+      console.warn(`Could not fetch overview for ${symbol}`);
+    }
+    
+    const stockData = await client.parseQuoteData(quoteResponse, overview);
 
-    const stockData = {
-      symbol: meta.symbol,
-      name: meta.longName || meta.symbol,
-      price: meta.regularMarketPrice || 0,
-      change: meta.regularMarketPrice - meta.previousClose || 0,
-      changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose * 100) || 0,
-      volume: quote.volume[quote.volume.length - 1] || 0,
-      marketCap: formatMarketCap(meta.marketCap),
-      high: meta.regularMarketDayHigh || 0,
-      low: meta.regularMarketDayLow || 0,
-      open: meta.regularMarketOpen || 0,
-      previousClose: meta.previousClose || 0,
-      fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh || 0,
-      fiftyTwoWeekLow: meta.fiftyTwoWeekLow || 0,
-      peRatio: meta.trailingPE || 0,
-      eps: meta.epsTrailingTwelveMonths || 0,
-      beta: meta.beta || 1.0,
-      dividendYield: meta.dividendYield ? meta.dividendYield * 100 : 0,
-      avgVolume: meta.averageDailyVolume10Day || 0,
-      sharesOutstanding: formatShares(meta.sharesOutstanding)
-    };
-
-    return NextResponse.json(stockData);
+    // Add cache headers
+    const response = NextResponse.json(stockData);
+    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');
+    
+    return response;
   } catch (error) {
-    console.error('Error fetching stock:', error);
+    const apiError = error as ApiError;
+
+    if (apiError.code === '429') {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(apiError.retryAfter || 60),
+          },
+        }
+      );
+    }
+
+    if (apiError.code === 'RATE_LIMITED') {
+      return NextResponse.json(
+        { error: 'API rate limit reached. Free tier allows 5 calls/min, 25 calls/day.' },
+        { status: 503 }
+      );
+    }
+
+    console.error('Error fetching stock:', apiError.message);
     return NextResponse.json(
-      { error: 'Failed to fetch stock data' },
+      { error: apiError.message || 'Failed to fetch stock data' },
       { status: 500 }
     );
   }
-}
-
-function formatMarketCap(value?: number): string {
-  if (!value) return 'N/A';
-  if (value >= 1e12) return `${(value / 1e12).toFixed(2)}T`;
-  if (value >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
-  if (value >= 1e6) return `${(value / 1e6).toFixed(2)}M`;
-  return value.toString();
-}
-
-function formatShares(value?: number): string {
-  if (!value) return 'N/A';
-  if (value >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
-  if (value >= 1e6) return `${(value / 1e6).toFixed(2)}M`;
-  return value.toString();
 }
