@@ -17,6 +17,7 @@ import Link from "next/link";
 import { ArrowUpIcon, ArrowDownIcon, TrendingUp } from "lucide-react";
 import { StockHeatmap } from "@/components/StockHeatmap";
 import { useSession } from "@/lib/auth-client";
+import { toast } from "sonner";
 
 interface Crypto {
   ticker: string;
@@ -66,12 +67,38 @@ export default function Home() {
             newsRes.json(),
           ]);
 
-          setIndices(indicesData);
-          setStocks(stocksData);
-          setCryptos(cryptosData.slice(0, 5));
-          setNews(newsData.slice(0, 3));
+          // Handle error responses properly
+          if (indicesData && !indicesData.error && Array.isArray(indicesData)) {
+            setIndices(indicesData);
+          } else {
+            console.error("Indices error:", indicesData?.error);
+            setIndices([]);
+          }
+
+          if (stocksData && !stocksData.error && Array.isArray(stocksData)) {
+            setStocks(stocksData);
+          } else {
+            console.error("Stocks error:", stocksData?.error);
+            toast.error(stocksData?.error || "Failed to load stock data");
+            setStocks([]);
+          }
+
+          if (cryptosData && !cryptosData.error && Array.isArray(cryptosData)) {
+            setCryptos(cryptosData.slice(0, 5));
+          } else {
+            console.error("Cryptos error:", cryptosData?.error);
+            setCryptos([]);
+          }
+
+          if (newsData && !newsData.error && Array.isArray(newsData)) {
+            setNews(newsData.slice(0, 3));
+          } else {
+            console.error("News error:", newsData?.error);
+            setNews([]);
+          }
         } catch (error) {
           console.error("Error fetching data:", error);
+          toast.error("Failed to fetch market data");
         } finally {
           setLoading(false);
         }
@@ -159,8 +186,12 @@ export default function Home() {
           <h2 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6">Market Heatmap</h2>
           {loading ? (
             <Skeleton className="h-[600px]" />
-          ) : (
+          ) : stocks.length > 0 ? (
             <StockHeatmap stocks={stocks} />
+          ) : (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">No stock data available</p>
+            </Card>
           )}
         </section>
 
@@ -231,26 +262,40 @@ export default function Home() {
             <ViewToggle view={viewMode} onViewChange={setViewMode} />
           </div>
 
-          {viewMode === "grid" && (
+          {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {stocks.map((stock) => (
-                <StockCard key={stock.symbol} stock={stock} />
+              {[...Array(10)].map((_, i) => (
+                <Skeleton key={i} className="h-[240px]" />
               ))}
             </div>
-          )}
-          {viewMode === "list" && (
-            <div className="space-y-3">
-              {stocks.map((stock) => (
-                <StockListItem key={stock.symbol} stock={stock} />
-              ))}
-            </div>
-          )}
-          {viewMode === "compact" && (
-            <div className="space-y-2">
-              {stocks.map((stock) => (
-                <StockCompactItem key={stock.symbol} stock={stock} />
-              ))}
-            </div>
+          ) : stocks.length > 0 ? (
+            <>
+              {viewMode === "grid" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {stocks.map((stock) => (
+                    <StockCard key={stock.symbol} stock={stock} />
+                  ))}
+                </div>
+              )}
+              {viewMode === "list" && (
+                <div className="space-y-3">
+                  {stocks.map((stock) => (
+                    <StockListItem key={stock.symbol} stock={stock} />
+                  ))}
+                </div>
+              )}
+              {viewMode === "compact" && (
+                <div className="space-y-2">
+                  {stocks.map((stock) => (
+                    <StockCompactItem key={stock.symbol} stock={stock} />
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">Unable to load stock data. Please check your Alpha Vantage API key.</p>
+            </Card>
           )}
         </section>
 
