@@ -18,7 +18,7 @@ interface CryptoCardProps {
 }
 
 export function CryptoCard({ crypto }: CryptoCardProps) {
-  const isPositive = crypto.change >= 0;
+  const isPositive = (crypto.change ?? 0) >= 0;
 
   return (
     <Card className="p-6 hover:shadow-lg transition-all cursor-pointer hover:scale-[1.02] duration-200 relative overflow-hidden">
@@ -47,7 +47,7 @@ export function CryptoCard({ crypto }: CryptoCardProps) {
             ) : (
               <TrendingDown className="h-4 w-4" />
             )}
-            {Math.abs(crypto.changePercent).toFixed(2)}%
+            {Math.abs(crypto.changePercent ?? 0).toFixed(2)}%
           </div>
         </div>
 
@@ -64,31 +64,31 @@ export function CryptoCard({ crypto }: CryptoCardProps) {
             }`}
           >
             {isPositive ? "+" : ""}
-            ${Math.abs(crypto.change).toFixed(2)} today
+            ${Math.abs(crypto.change ?? 0).toFixed(2)} today
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4 pt-3 border-t">
           <div>
             <p className="text-xs text-muted-foreground">Market Cap</p>
-            <p className="font-semibold text-sm">{crypto.marketCap}</p>
+            <p className="font-semibold text-sm">{crypto.marketCap || "N/A"}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Volume</p>
             <p className="font-semibold text-sm">
-              {(crypto.volume / 1000000).toFixed(1)}M
+              {((crypto.volume ?? 0) / 1000000).toFixed(1)}M
             </p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">24h High</p>
             <p className="font-semibold text-sm text-green-600">
-              ${crypto.high.toFixed(2)}
+              ${(crypto.high ?? 0).toFixed(2)}
             </p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">24h Low</p>
             <p className="font-semibold text-sm text-red-600">
-              ${crypto.low.toFixed(2)}
+              ${(crypto.low ?? 0).toFixed(2)}
             </p>
           </div>
         </div>
